@@ -1,19 +1,54 @@
 import React, { useState } from 'react';
 import { Plus, Ship, Filter, Search } from 'lucide-react';
 import ShipCard from '../components/ui/ShipCard';
+import ShipModal from '../components/ui/ShipModal';
 import { useShipStore } from '../stores/shipStore';
+import { Ship as ShipType } from '../types';
 
 const ShipInventory: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingShip, setEditingShip] = useState<ShipType | undefined>(undefined);
+
   const ships = useShipStore((state) => state.ships);
+  const addShip = useShipStore((state) => state.addShip);
+  const updateShip = useShipStore((state) => state.updateShip);
+  const deleteShip = useShipStore((state) => state.deleteShip);
 
   const filteredShips = ships.filter(ship => {
-    const matchesSearch = ship.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    const matchesSearch = ship.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          ship.type.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesFilter = filterStatus === 'all' || ship.status === filterStatus;
     return matchesSearch && matchesFilter;
   });
+
+  const handleOpenAddModal = () => {
+    setEditingShip(undefined);
+    setIsModalOpen(true);
+  };
+
+  const handleOpenEditModal = (ship: ShipType) => {
+    setEditingShip(ship);
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setEditingShip(undefined);
+  };
+
+  const handleSaveShip = (shipData: Omit<ShipType, 'id'>) => {
+    if (editingShip) {
+      updateShip(editingShip.id, shipData);
+    } else {
+      addShip(shipData);
+    }
+  };
+
+  const handleDeleteShip = (id: string) => {
+    deleteShip(id);
+  };
 
   return (
     <div className="space-y-6">
@@ -23,13 +58,16 @@ const ShipInventory: React.FC = () => {
           <p className="mt-1 text-sm text-gray-500">Manage your fleet of vessels</p>
         </div>
         <div className="mt-4 sm:mt-0">
-          <button className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+          <button
+            onClick={handleOpenAddModal}
+            className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+          >
             <Plus size={16} className="mr-2" />
             Add New Ship
           </button>
         </div>
       </div>
-      
+
       {/* Search and filter bar */}
       <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
         <div className="sm:flex sm:items-center sm:justify-between">
@@ -45,7 +83,7 @@ const ShipInventory: React.FC = () => {
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-          
+
           <div className="mt-3 sm:mt-0 sm:ml-4 flex items-center">
             <Filter size={18} className="text-gray-400 mr-2" />
             <label htmlFor="status-filter" className="text-sm font-medium text-gray-700 mr-2">
@@ -66,12 +104,17 @@ const ShipInventory: React.FC = () => {
           </div>
         </div>
       </div>
-      
+
       {/* Ships grid */}
       {filteredShips.length > 0 ? (
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {filteredShips.map((ship) => (
-            <ShipCard key={ship.id} ship={ship} />
+            <ShipCard
+              key={ship.id}
+              ship={ship}
+              onEdit={handleOpenEditModal}
+              onDelete={handleDeleteShip}
+            />
           ))}
         </div>
       ) : (
@@ -79,16 +122,27 @@ const ShipInventory: React.FC = () => {
           <Ship size={48} className="mx-auto text-gray-400 mb-4" />
           <h3 className="text-lg font-medium text-gray-900 mb-1">No ships found</h3>
           <p className="text-gray-500">
-            {searchTerm || filterStatus !== 'all' 
-              ? 'Try adjusting your search or filter criteria' 
+            {searchTerm || filterStatus !== 'all'
+              ? 'Try adjusting your search or filter criteria'
               : 'Add a ship to get started with your fleet management'}
           </p>
-          <button className="mt-4 inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+          <button
+            onClick={handleOpenAddModal}
+            className="mt-4 inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+          >
             <Plus size={16} className="mr-2" />
             Add New Ship
           </button>
         </div>
       )}
+
+      {/* Ship Modal */}
+      <ShipModal
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+        onSave={handleSaveShip}
+        editShip={editingShip}
+      />
     </div>
   );
 };

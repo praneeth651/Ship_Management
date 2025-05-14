@@ -1,22 +1,42 @@
 import React, { useState } from 'react';
 import { Filter, Plus, Search } from 'lucide-react';
 import MaintenanceTaskCard from '../components/ui/MaintenanceTaskCard';
+import TaskModal from '../components/ui/TaskModal';
 import { useTaskStore } from '../stores/taskStore';
+import { MaintenanceTask } from '../types';
 
 const MaintenanceTasks: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [filterPriority, setFilterPriority] = useState('all');
+  const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
+  const [editingTask, setEditingTask] = useState<MaintenanceTask | undefined>(undefined);
+
   const tasks = useTaskStore((state) => state.tasks);
+  const addTask = useTaskStore((state) => state.addTask);
 
   const filteredTasks = tasks.filter(task => {
-    const matchesSearch = task.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    const matchesSearch = task.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          task.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          task.shipName.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = filterStatus === 'all' || task.status === filterStatus;
     const matchesPriority = filterPriority === 'all' || task.priority === filterPriority;
     return matchesSearch && matchesStatus && matchesPriority;
   });
+
+  const handleOpenTaskModal = () => {
+    setEditingTask(undefined);
+    setIsTaskModalOpen(true);
+  };
+
+  const handleCloseTaskModal = () => {
+    setIsTaskModalOpen(false);
+    setEditingTask(undefined);
+  };
+
+  const handleSaveTask = (taskData: Omit<MaintenanceTask, 'id'>) => {
+    addTask(taskData);
+  };
 
   return (
     <div className="space-y-6">
@@ -26,13 +46,16 @@ const MaintenanceTasks: React.FC = () => {
           <p className="mt-1 text-sm text-gray-500">Manage and track all maintenance activities</p>
         </div>
         <div className="mt-4 sm:mt-0">
-          <button className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+          <button
+            onClick={handleOpenTaskModal}
+            className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+          >
             <Plus size={16} className="mr-2" />
             Create Task
           </button>
         </div>
       </div>
-      
+
       {/* Search and filters */}
       <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
         <div className="space-y-4 sm:space-y-0 sm:flex sm:items-center sm:justify-between">
@@ -48,8 +71,8 @@ const MaintenanceTasks: React.FC = () => {
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-          
-          <div className="flex items-center space-x-4">
+
+          <div className="flex flex-wrap items-center gap-4">
             <div className="flex items-center">
               <Filter size={18} className="text-gray-400 mr-2" />
               <label htmlFor="status-filter" className="text-sm font-medium text-gray-700 mr-2">
@@ -68,7 +91,7 @@ const MaintenanceTasks: React.FC = () => {
                 <option value="overdue">Overdue</option>
               </select>
             </div>
-            
+
             <div className="flex items-center">
               <label htmlFor="priority-filter" className="text-sm font-medium text-gray-700 mr-2">
                 Priority:
@@ -88,7 +111,7 @@ const MaintenanceTasks: React.FC = () => {
           </div>
         </div>
       </div>
-      
+
       {/* Tasks grid */}
       {filteredTasks.length > 0 ? (
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
@@ -107,12 +130,23 @@ const MaintenanceTasks: React.FC = () => {
               ? 'Try adjusting your search or filter criteria'
               : 'Create a task to get started with your maintenance tracking'}
           </p>
-          <button className="mt-4 inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+          <button
+            onClick={handleOpenTaskModal}
+            className="mt-4 inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+          >
             <Plus size={16} className="mr-2" />
             Create Task
           </button>
         </div>
       )}
+
+      {/* Task Modal */}
+      <TaskModal
+        isOpen={isTaskModalOpen}
+        onClose={handleCloseTaskModal}
+        onSave={handleSaveTask}
+        editTask={editingTask}
+      />
     </div>
   );
 };

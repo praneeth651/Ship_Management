@@ -1,29 +1,46 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Calendar, Clock, FileText, Settings, Ship, PenTool as Tool, User } from 'lucide-react';
 import StatusBadge from '../components/ui/StatusBadge';
 import MaintenanceTaskCard from '../components/ui/MaintenanceTaskCard';
+import TaskModal from '../components/ui/TaskModal';
 import { useShipStore } from '../stores/shipStore';
 import { useTaskStore } from '../stores/taskStore';
+import { MaintenanceTask } from '../types';
 
 const ShipDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const ships = useShipStore((state) => state.ships);
   const tasks = useTaskStore((state) => state.tasks);
-  
+  const addTask = useTaskStore((state) => state.addTask);
+
+  const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
+
   // Find the ship with the matching ID
   const ship = ships.find((s) => s.id === id);
-  
+
   // Filter tasks related to this ship
   const shipTasks = tasks.filter((task) => task.shipId === id);
-  
+
+  const handleOpenTaskModal = () => {
+    setIsTaskModalOpen(true);
+  };
+
+  const handleCloseTaskModal = () => {
+    setIsTaskModalOpen(false);
+  };
+
+  const handleSaveTask = (taskData: Omit<MaintenanceTask, 'id'>) => {
+    addTask(taskData);
+  };
+
   if (!ship) {
     return (
       <div className="min-h-[50vh] flex flex-col items-center justify-center">
         <Ship size={48} className="text-gray-300 mb-4" />
         <h2 className="text-xl font-medium text-gray-900 mb-2">Ship Not Found</h2>
         <p className="text-gray-500 mb-4">The ship you're looking for doesn't exist or has been removed.</p>
-        <Link 
+        <Link
           to="/ships"
           className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
         >
@@ -38,7 +55,7 @@ const ShipDetails: React.FC = () => {
     <div className="space-y-6">
       {/* Header with back button */}
       <div className="flex items-center space-x-4">
-        <Link 
+        <Link
           to="/ships"
           className="p-2 rounded-md text-gray-500 hover:text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
@@ -49,7 +66,7 @@ const ShipDetails: React.FC = () => {
           <p className="text-sm text-gray-500">{ship.type} • {ship.year}</p>
         </div>
       </div>
-      
+
       {/* Ship details card */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
         <div className="bg-gradient-to-r from-blue-900 to-blue-700 h-40 relative">
@@ -70,7 +87,7 @@ const ShipDetails: React.FC = () => {
             </div>
           </div>
         </div>
-        
+
         <div className="p-6">
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
             <div className="p-4 border border-gray-200 rounded-lg">
@@ -84,7 +101,7 @@ const ShipDetails: React.FC = () => {
                 </div>
               </div>
             </div>
-            
+
             <div className="p-4 border border-gray-200 rounded-lg">
               <div className="flex items-center space-x-3">
                 <div className="p-2 bg-green-100 rounded-md text-green-600">
@@ -96,7 +113,7 @@ const ShipDetails: React.FC = () => {
                 </div>
               </div>
             </div>
-            
+
             <div className="p-4 border border-gray-200 rounded-lg">
               <div className="flex items-center space-x-3">
                 <div className="p-2 bg-yellow-100 rounded-md text-yellow-600">
@@ -108,7 +125,7 @@ const ShipDetails: React.FC = () => {
                 </div>
               </div>
             </div>
-            
+
             <div className="p-4 border border-gray-200 rounded-lg">
               <div className="flex items-center space-x-3">
                 <div className="p-2 bg-purple-100 rounded-md text-purple-600">
@@ -123,26 +140,9 @@ const ShipDetails: React.FC = () => {
           </div>
         </div>
       </div>
-      
+
       {/* Ship details tabs */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-        <div className="border-b border-gray-200">
-          <nav className="flex -mb-px">
-            <button className="border-b-2 border-blue-500 px-6 py-4 text-sm font-medium text-blue-600">
-              Maintenance Tasks
-            </button>
-            <button className="border-b-2 border-transparent px-6 py-4 text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300">
-              Specifications
-            </button>
-            <button className="border-b-2 border-transparent px-6 py-4 text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300">
-              History
-            </button>
-            <button className="border-b-2 border-transparent px-6 py-4 text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300">
-              Documents
-            </button>
-          </nav>
-        </div>
-        
         <div className="p-6">
           {/* Task actions */}
           <div className="mb-6 flex justify-between items-center">
@@ -156,13 +156,16 @@ const ShipDetails: React.FC = () => {
                 <Settings size={16} className="mr-2" />
                 Configure
               </button>
-              <button className="inline-flex items-center px-3 py-1.5 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+              <button
+                onClick={handleOpenTaskModal}
+                className="inline-flex items-center px-3 py-1.5 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              >
                 <Tool size={16} className="mr-2" />
                 New Task
               </button>
             </div>
           </div>
-          
+
           {/* Tasks list */}
           {shipTasks.length > 0 ? (
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
@@ -177,7 +180,10 @@ const ShipDetails: React.FC = () => {
               <p className="text-gray-500 max-w-md mx-auto mb-4">
                 This ship doesn't have any maintenance tasks scheduled yet. Create a new task to get started.
               </p>
-              <button className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+              <button
+                onClick={handleOpenTaskModal}
+                className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              >
                 <Tool size={16} className="mr-2" />
                 Create New Task
               </button>
@@ -185,6 +191,16 @@ const ShipDetails: React.FC = () => {
           )}
         </div>
       </div>
+
+      {/* Task Modal */}
+      {ship && (
+        <TaskModal
+          isOpen={isTaskModalOpen}
+          onClose={handleCloseTaskModal}
+          onSave={handleSaveTask}
+          editTask={undefined}
+        />
+      )}
     </div>
   );
 };

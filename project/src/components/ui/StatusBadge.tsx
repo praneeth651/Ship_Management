@@ -1,6 +1,6 @@
 import React from 'react';
 
-type StatusType = 'overdue' | 'scheduled' | 'in-progress' | 'completed' | 'warning';
+type StatusType = 'overdue' | 'scheduled' | 'in-progress' | 'completed' | 'warning' | 'operational';
 
 interface StatusBadgeProps {
   status: StatusType;
@@ -17,6 +17,7 @@ const StatusBadge: React.FC<StatusBadgeProps> = ({ status, className = '' }) => 
       case 'in-progress':
         return 'bg-yellow-100 text-yellow-800';
       case 'completed':
+      case 'operational':
         return 'bg-green-100 text-green-800';
       case 'warning':
         return 'bg-orange-100 text-orange-800';
@@ -29,6 +30,8 @@ const StatusBadge: React.FC<StatusBadgeProps> = ({ status, className = '' }) => 
     switch (status) {
       case 'in-progress':
         return 'In Progress';
+      case 'operational':
+        return 'Operational';
       default:
         return status.charAt(0).toUpperCase() + status.slice(1);
     }
