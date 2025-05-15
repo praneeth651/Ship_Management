@@ -110,15 +110,6 @@ const LoginForm: React.FC = () => {
             </div>
           </form>
 
-          <div className="mt-6">
-            <div className="relative">
-              <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-white text-gray-500">
-                  Default credentials: admin@entnt.com / admin123
-                </span>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
     </div>

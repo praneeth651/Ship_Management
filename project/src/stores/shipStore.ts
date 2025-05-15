@@ -3,6 +3,7 @@ import { persist } from 'zustand/middleware';
 import { Ship } from '../types';
 import { mockShips } from '../data/mockData';
 import { v4 as uuidv4 } from 'uuid';
+import { useNotificationStore } from './notificationStore';
 
 interface ShipStore {
   ships: Ship[];
@@ -20,7 +21,7 @@ const getInitialShips = (): Ship[] => {
 
 export const useShipStore = create<ShipStore>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       ships: getInitialShips(),
       addShip: (shipData) => {
         const newShip: Ship = {
@@ -28,15 +29,49 @@ export const useShipStore = create<ShipStore>()(
           id: uuidv4(),
         };
         set((state) => ({ ships: [newShip, ...state.ships] }));
+
+        // Create notification for new ship
+        useNotificationStore.getState().addNotification({
+          title: 'New Ship Added',
+          message: `${shipData.name} has been added to the fleet`,
+          type: 'info',
+          relatedId: newShip.id
+        });
       },
-      updateShip: (id, updates) => set((state) => ({
-        ships: state.ships.map((ship) =>
-          ship.id === id ? { ...ship, ...updates } : ship
-        ),
-      })),
-      deleteShip: (id) => set((state) => ({
-        ships: state.ships.filter((ship) => ship.id !== id),
-      })),
+      updateShip: (id, updates) => {
+        const currentShip = get().ships.find(ship => ship.id === id);
+        set((state) => ({
+          ships: state.ships.map((ship) =>
+            ship.id === id ? { ...ship, ...updates } : ship
+          ),
+        }));
+
+        // Create notification for ship update
+        if (currentShip) {
+          useNotificationStore.getState().addNotification({
+            title: 'Ship Updated',
+            message: `${currentShip.name} information has been updated`,
+            type: 'info',
+            relatedId: id
+          });
+        }
+      },
+      deleteShip: (id) => {
+        const shipToDelete = get().ships.find(ship => ship.id === id);
+        set((state) => ({
+          ships: state.ships.filter((ship) => ship.id !== id),
+        }));
+
+        // Create notification for ship deletion
+        if (shipToDelete) {
+          useNotificationStore.getState().addNotification({
+            title: 'Ship Removed',
+            message: `${shipToDelete.name} has been removed from the fleet`,
+            type: 'urgent',
+            relatedId: id
+          });
+        }
+      },
       setShips: (ships) => set({ ships }),
     }),
     {

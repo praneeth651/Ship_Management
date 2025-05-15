@@ -69,13 +69,6 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
           </ul>
         </nav>
 
-        {/* Footer */}
-        <div className="absolute bottom-0 w-full p-4 border-t border-blue-800">
-          <div className="flex items-center space-x-3 text-sm text-blue-200 hover:text-white cursor-pointer">
-            <LifeBuoy size={20} />
-            <span>Support & Help</span>
-          </div>
-        </div>
       </aside>
     </>
   );
